@@ -1,0 +1,7 @@
+#!/bin/bash
+
+base="kubectl get pv -o  custom-columns=NAME:.metadata.name,VOLUME-ID:.spec.csi.volumeHandle,Capacity:.spec.capacity.storage"
+
+
+$base "$@"
+

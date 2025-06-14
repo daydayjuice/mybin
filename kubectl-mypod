@@ -1,0 +1,7 @@
+#!/bin/bash
+
+base="kubectl get pods -o custom-columns=NAMESPACE:.metadata.namespace,POD:.metadata.name,CPU_REQUEST:.spec.containers[*].resources.requests.cpu,MEMORY_REQUEST:.spec.containers[*].resources.requests.memory"
+
+
+$base "$@"
+

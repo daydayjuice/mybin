@@ -1,0 +1,45 @@
+#!/bin/bash
+
+kubectl get nodepools.karpenter.sh -o json | jq -r '
+  [.items[] | {
+    name: .metadata.name,
+    weight: (.spec.weight // 0),
+    taints: (
+      (.spec.template.spec.taints // [])
+      | if length == 0 then "none"
+        else map("\(.key)=\(.value)") | join(",")
+        end
+    )
+  }]
+  | sort_by(-.weight)
+  | .[]
+  | "\(.name)\t\(.weight)\t\(.taints)"' | column -t
+
+
+#kubectl get nodepools.karpenter.sh -o json | jq -r '
+#  [.items[] | {
+#    name: .metadata.name,
+#    weight: (.spec.weight // 0),
+#    taints: (.spec.template.spec.taints // []) 
+#      | map("\(.key)=\(.value)") 
+#      | join(",")
+#  }] 
+#  | sort_by(-.weight)
+#  | .[] 
+#  | "\(.name)\t\(.weight)\t\(.taints)"' | column -t
+
+
+
+#kubectl get nodepools.karpenter.sh -o json | jq -r '
+#  .items[] | 
+#  {
+#    name: .metadata.name, 
+#    weight: .spec.weight, 
+#    taints: (.spec.template.spec.taints // []) 
+#      | map("\(.key)=\(.value)") 
+#      | join(",")
+#  } 
+#  | "\(.name)\t\(.weight)\t\(.taints)"' | column -t
+
+
+

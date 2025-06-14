@@ -1,0 +1,11 @@
+#!/bin/bash
+cat << EOF
+\$(spaas secrets export-local -s ops-bootstrap github circleci pagerduty datadog slack artifactory)
+eval \$(spaas secrets -s ops-bootstrap -e prd export-local ops-bootstrap-sa/gcp)
+export PIPELINE_TF_USE_KUBERNETES=true
+echo "spaas local init succeed"
+
+aws sts get-caller-identity
+
+EOF
+

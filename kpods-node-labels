@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Parse custom --node-label arguments, pass the rest to kubectl
+label_keys=()
+kubectl_args=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --node-label)
+      shift
+      if [[ -n "$1" ]]; then
+        label_keys+=("$1")
+        shift
+      fi
+      ;;
+    *)
+      kubectl_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ ${#label_keys[@]} -eq 0 ]; then
+  label_keys=("beta.kubernetes.io/instance-type")
+fi
+
+# Build header
+header="NAMESPACE POD NODE"
+for label in "${label_keys[@]}"; do
+  header+=" NODE_LABEL_${label}"
+done
+echo "$header"
+
+# Get pods info (always include namespace, pod, node columns)
+kubectl get pods "${kubectl_args[@]}" -o custom-columns=NAMESPACE:.metadata.namespace,POD:.metadata.name,NODE:.spec.nodeName --no-headers | while read -r ns pod node; do
+  line="$ns $pod $node"
+  if [ -n "$node" ] && [ "$node" != "<none>" ]; then
+    for label in "${label_keys[@]}"; do
+      value=$(kubectl get node "$node" -o jsonpath="{.metadata.labels.$label}" 2>/dev/null)
+      if [ -z "$value" ]; then value="N/A"; fi
+      line+=" $value"
+    done
+  else
+    for label in "${label_keys[@]}"; do
+      line+=" N/A"
+    done
+  fi
+  echo "$line"
+done 

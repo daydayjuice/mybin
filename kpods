@@ -1,0 +1,38 @@
+#!/bin/bash
+
+show_nodes=0
+args=()
+for arg in "$@"; do
+  if [[ "$arg" == "--show-nodes" ]]; then
+    show_nodes=1
+  else
+    args+=("$arg")
+  fi
+done
+
+base="kubectl get pods -o custom-columns=NAMESPACE:.metadata.namespace,POD:.metadata.name,NODE:.spec.nodeName,NODE_PRICING:.spec.nodeName,CPU_REQUEST:.spec.containers[*].resources.requests.cpu,MEMORY_REQUEST:.spec.containers[*].resources.requests.memory"
+
+# First get the base pod information
+pods_output=$($base "${args[@]}")
+
+# Process the output to add node instance type as NODE_PRICING
+# (header remains NODE_PRICING for compatibility)
+echo "$pods_output" | while IFS= read -r line; do
+    if [[ $line == *"NODE_PRICING"* ]]; then
+        # Print header line as is
+        echo "$line"
+    else
+        # Get node name from the line
+        node_name=$(echo "$line" | awk '{print $3}')
+        if [ ! -z "$node_name" ] && [ "$node_name" != "<none>" ]; then
+            # Get node instance type label
+            instance_type=$(kubectl get node "$node_name" -o jsonpath='{.metadata.labels.beta.kubernetes.io/instance-type}' 2>/dev/null || echo "N/A")
+            # Replace the placeholder with actual instance type
+            echo "$line" | awk -v price="$instance_type" '{$4=price; print $0}'
+        else
+            # If no node name, just print the line with N/A for instance type
+            echo "$line" | awk '{$4="N/A"; print $0}'
+        fi
+    fi
+done
+

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+base="kubectl get nodes  -L beta.kubernetes.io/instance-type -L topology.kubernetes.io/zone -L pricing -L karpenter.sh/capacity-type  -L karpenter.sh/nodepool -L scheduling.cast.ai/node-template -L nodegroup "
+
+
+$base "$@"
+

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Drain Command
+command="kubectl drain --ignore-daemonsets --delete-emptydir-data"
+# Append all the parameters to the command
+for param in "$@"; do
+  command+=" $param"
+done
+
+# Perform a dry run of draining the node
+eval "${command} --dry-run=client"
+
+# Check if the dry run was successful
+if [ $? -eq 0 ]; then
+    echo "Dry run successful, proceeding to drain the node."
+    # Perform the actual node drain
+    eval "${command}"
+
+else
+    echo "Dry run failed, aborting drain operation."
+fi
+
